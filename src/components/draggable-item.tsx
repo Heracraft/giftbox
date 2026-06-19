@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { LetterItem } from '@/app/page'
+import { LetterItem } from '@/components/canvas-editor'
 import { PhotoItem } from '@/components/photo-item'
 import { LetterNote } from '@/components/letter-note'
 import { VoiceNote } from '@/components/voice-note'
@@ -15,6 +15,7 @@ interface DraggableItemProps {
   updateItemContent: (id: string, content: string, field?: string) => void
   moveForward: () => void
   moveBackward: () => void
+  isPubliclyEditable?: boolean
   children: React.ReactNode
 }
 
@@ -25,7 +26,9 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
   isDragging,
   updateItemContent,
   moveForward,
-  moveBackward
+  moveBackward,
+  isPubliclyEditable = true,
+  children
 }) => {
   const [isHovered, setIsHovered] = useState(false)
 
@@ -42,39 +45,6 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
     MozUserSelect: 'none',
     msUserSelect: 'none',
     zIndex: item.zIndex || 1
-  }
-
-  const renderItem = () => {
-    switch (item.type) {
-      case 'photo':
-        return (
-          <PhotoItem 
-            url={item.content as string} 
-            caption={item.caption || ''}
-            onCaptionChange={(caption) => updateItemContent(item.id, caption, 'caption')}
-          />
-        )
-      case 'note':
-        return <LetterNote 
-          content={item.content as string} 
-          onChange={(content) => updateItemContent(item.id, content)} 
-          color={item.color || 'bg-white'}
-        />
-      case 'voice':
-        return <VoiceNote audioBlob={item.content as Blob} />
-      case 'spotify':
-        return <SpotifyPlayer spotifyUrl={item.content as string} />
-      case 'doodle':
-        return (
-          <object 
-            data={item.content as string} 
-            type="image/svg+xml"
-            className="w-48 h-48 pointer-events-none" 
-          />
-        )
-      default:
-        return null
-    }
   }
 
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -96,8 +66,8 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       className="relative group touch-none"
     >
-      {renderItem()}
-      {isHovered && (
+      {children}
+      {isHovered && isPubliclyEditable && (
         <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-50">
           <Button
             variant="ghost"

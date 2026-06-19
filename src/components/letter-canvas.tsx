@@ -1,5 +1,5 @@
 import React from 'react'
-import { LetterItem } from '@/app/page'
+import { LetterItem } from '@/components/canvas-editor'
 import { DraggableItem } from '@/components/draggable-item'
 import { PhotoItem } from '@/components/photo-item'
 import { LetterNote } from '@/components/letter-note'
@@ -16,6 +16,7 @@ interface LetterCanvasProps {
   currentItem: LetterItem | null
   moveItemForward: (id: string) => void
   moveItemBackward: (id: string) => void
+  isPubliclyEditable?: boolean
 }
 
 export const LetterCanvas: React.FC<LetterCanvasProps> = ({ 
@@ -26,17 +27,19 @@ export const LetterCanvas: React.FC<LetterCanvasProps> = ({
   isDragging,
   currentItem,
   moveItemForward,
-  moveItemBackward
+  moveItemBackward,
+  isPubliclyEditable = true
 }) => {
   const renderItem = (item: LetterItem) => {
     switch (item.type) {
       case 'photo':
-        return <PhotoItem url={item.content as string} caption={item.caption || ''} onCaptionChange={(caption) => updateItemContent(item.id, caption, 'caption')} />
+        return <PhotoItem url={item.content as string} caption={item.caption || ''} onCaptionChange={(caption) => updateItemContent(item.id, caption, 'caption')} readOnly={!isPubliclyEditable} />
       case 'note':
         return <LetterNote 
           content={item.content as string} 
           onChange={(content) => updateItemContent(item.id, content)} 
           color={item.color || 'bg-white'} 
+          readOnly={!isPubliclyEditable}
         />
       case 'voice':
         return <VoiceNote audioBlob={item.content as Blob} />
@@ -61,6 +64,7 @@ export const LetterCanvas: React.FC<LetterCanvasProps> = ({
           updateItemContent={updateItemContent}
           moveForward={() => moveItemForward(item.id)}
           moveBackward={() => moveItemBackward(item.id)}
+          isPubliclyEditable={isPubliclyEditable}
         >
           {renderItem(item)}
         </DraggableItem>

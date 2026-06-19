@@ -8,7 +8,7 @@ declare global {
 }
 
 interface VoiceNoteProps {
-  audioBlob: Blob
+  audioBlob: Blob | string
 }
 
 export const VoiceNote: React.FC<VoiceNoteProps> = ({ audioBlob }) => {
@@ -26,18 +26,30 @@ export const VoiceNote: React.FC<VoiceNoteProps> = ({ audioBlob }) => {
     const context = new (window.AudioContext || (window).webkitAudioContext)()
     setAudioContext(context)
 
-    const reader = new FileReader()
-    reader.onload = async (e) => {
+    const loadAudio = async () => {
       try {
-        const arrayBuffer = e.target?.result as ArrayBuffer
-        const audioBuffer = await context.decodeAudioData(arrayBuffer)
-        setAudioBuffer(audioBuffer)
-        setDuration(audioBuffer.duration)
+        let arrayBuffer: ArrayBuffer
+        if (typeof audioBlob === 'string') {
+          const response = await fetch(audioBlob)
+          arrayBuffer = await response.arrayBuffer()
+        } else {
+          arrayBuffer = await new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = (e) => resolve(e.target?.result as ArrayBuffer)
+            reader.onerror = reject
+            reader.readAsArrayBuffer(audioBlob)
+          })
+        }
+        
+        const audioBufferData = await context.decodeAudioData(arrayBuffer)
+        setAudioBuffer(audioBufferData)
+        setDuration(audioBufferData.duration)
       } catch (error) {
-        console.error('Error decoding audio data:', error)
+        console.error('Error loading or decoding audio data:', error)
       }
     }
-    reader.readAsArrayBuffer(audioBlob)
+    
+    loadAudio()
 
     return () => {
       context.close()
