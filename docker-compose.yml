@@ -7,8 +7,6 @@ services:
       - 'pocketbase-data:/app/pb_data'
       - 'pocketbase-hooks:/app/pb_hooks'
       - './pb_migrations:/app/pb_migrations'
-    ports:
-      - '8080:8080'
 
   web:
     build:
@@ -16,8 +14,6 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${SERVICE_URL_POCKETBASE_8080}
-    ports:
-      - '3000:3000'
     environment:
       - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${SERVICE_URL_POCKETBASE_8080}
     depends_on:
