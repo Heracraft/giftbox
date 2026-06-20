@@ -159,6 +159,39 @@ export default function CanvasEditor({
     normalizeZIndices();
   }, []);
 
+  useEffect(() => {
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
+
+    const preventOneFingerPan = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        e.touches.length === 1 && 
+        target && 
+        !target.closest('.draggable-item') && 
+        !target.closest('.exclude-pan')
+      ) {
+        e.stopPropagation();
+      }
+    };
+
+    const handleCanvasPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && !target.closest('.draggable-item') && !target.closest('.exclude-pan')) {
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }
+    };
+
+    canvasElement.addEventListener('touchstart', preventOneFingerPan, { capture: true });
+    canvasElement.addEventListener('pointerdown', handleCanvasPointerDown, { capture: true });
+    return () => {
+      canvasElement.removeEventListener('touchstart', preventOneFingerPan, { capture: true });
+      canvasElement.removeEventListener('pointerdown', handleCanvasPointerDown, { capture: true });
+    };
+  }, []);
+
   const addItem = (item: LetterItem) => {
     setItems((prevItems) => {
       

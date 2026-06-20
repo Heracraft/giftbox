@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import { LetterItem } from '@/components/canvas-editor'
 import { Button } from "@/components/ui/button"
 import { X, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react'
@@ -27,7 +27,6 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
   children
 }) => {
   const [isHovered, setIsHovered] = useState(false)
-  const touchTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -61,28 +60,10 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       return;
     }
     
-    e.persist();
-    
-    touchTimerRef.current = setTimeout(() => {
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-      handleDragStart(e, item);
-    }, 300);
-  };
-
-  const handleTouchMove = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50);
     }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-      touchTimerRef.current = null;
-    }
+    handleDragStart(e, item);
   };
 
   return (
@@ -90,12 +71,9 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       style={style}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative group ${isDragging ? "touch-none" : ""}`}
+      className={`relative group exclude-pan draggable-item ${isDragging ? "touch-none" : ""}`}
     >
       {children}
       {isHovered && isPubliclyEditable && (
