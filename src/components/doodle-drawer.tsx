@@ -94,19 +94,18 @@ export const DoodleDrawer: React.FC<DoodleDrawerProps> = ({ onClose, onDoodleAdd
     // Clone the SVG to remove event listeners and refs
     const clonedSvg = svg.cloneNode(true) as SVGSVGElement
     
-    // Calculate the viewBox based on the SVG's dimensions
-    const rect = svg.getBoundingClientRect()
-    clonedSvg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`)
-    clonedSvg.setAttribute('width', '100%')
-    clonedSvg.setAttribute('height', '100%')
+    // Set explicit dimensions to ensure rendering on mobile Safari
+    clonedSvg.setAttribute('width', '400')
+    clonedSvg.setAttribute('height', '300')
+    clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     clonedSvg.style.backgroundColor = 'transparent'
     
     // Convert to string
     const svgData = new XMLSerializer().serializeToString(clonedSvg)
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml' })
-    const svgUrl = URL.createObjectURL(svgBlob)
+    const base64Data = btoa(unescape(encodeURIComponent(svgData)))
+    const dataUrl = `data:image/svg+xml;base64,${base64Data}`
     
-    onDoodleAdd(svgUrl)
+    onDoodleAdd(dataUrl)
     onClose()
   }
 

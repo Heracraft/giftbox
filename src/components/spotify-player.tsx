@@ -1,75 +1,54 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 
 interface SpotifyPlayerProps {
   spotifyUrl: string;
 }
 
 export const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ spotifyUrl }) => {
-  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const iframeSrc = useMemo(() => {
+    try {
+      const urlObj = new URL(spotifyUrl);
+      if (urlObj.hostname === "open.spotify.com") {
+        const pathParts = urlObj.pathname.split("/").filter(Boolean);
 
-  useEffect(() => {
-    const fetchOembed = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `https://open.spotify.com/oembed?url=${encodeURIComponent(
-            spotifyUrl
-          )}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch Spotify embed");
+        // If it's already an embed URL
+        if (pathParts[0] === "embed") {
+          return spotifyUrl;
         }
-        const data = await response.json();
 
-        // Extract iframe src from HTML string
-        const srcMatch = data.html.match(/src="([^"]+)"/);
-        if (!srcMatch) throw new Error("Could not find iframe src");
-        setIframeSrc(srcMatch[1]);
-      } catch (err) {
-        setError("Error loading Spotify embed");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+        // If it's a standard URL: /track/123 -> /embed/track/123
+        if (pathParts.length >= 2) {
+          const type = pathParts[0];
+          const id = pathParts[1];
+          return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
+        }
       }
-    };
-
-    fetchOembed();
+    } catch (e) {
+      console.error("Invalid Spotify URL", e);
+    }
+    return null;
   }, [spotifyUrl]);
 
-  if (isLoading) {
+  if (!iframeSrc) {
     return (
-      <div className="bg-white p-4 shadow-md rounded-lg w-[300px] h-[152px] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white p-4 shadow-md rounded-lg w-[300px] h-[152px] flex items-center justify-center text-red-500">
-        {error}
+      <div className="bg-white p-4 shadow-md rounded-lg w-[300px] h-[152px] flex items-center justify-center text-red-500 text-sm text-center">
+        Invalid Spotify URL. Please paste a valid track, album, or playlist link.
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-4 shadow-md rounded-lg w-[300px] transform-gpu">
-      {iframeSrc && (
-        <iframe
-          src={iframeSrc}
-          width="100%"
-          height="152"
-          frameBorder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-        />
-      )}
+    <div className="bg-white p-4 shadow-md rounded-lg transform-gpu">
+      <iframe
+        src={iframeSrc}
+        height="152"
+        frameBorder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        className="pointer-events-auto"
+      />
     </div>
   );
 };

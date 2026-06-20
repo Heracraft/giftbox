@@ -1,7 +1,7 @@
 import PocketBase, { RecordModel } from 'pocketbase';
 
-// The remote instance URL provided by the user
-export const pb = new PocketBase(process.env.POCKETBASE_INSTANCE_URL);
+// Use NEXT_PUBLIC_ prefix so it is available in the browser
+export const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_INSTANCE_URL);
 
 // Utility to get the full URL of an uploaded file
 export const getFileUrl = (record: RecordModel, filename: string) => {

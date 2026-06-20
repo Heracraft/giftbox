@@ -17,6 +17,9 @@ export const LetterNote: React.FC<LetterNoteProps> = ({ content, onChange, color
         placeholder={readOnly ? '' : "Type your note here..."}
         className="w-full h-32 resize-none bg-transparent border-none shadow-none focus:ring-0 focus-visible:ring-0 focus:ring-offset-0 font-mono"
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         readOnly={readOnly}
       />
     </div>

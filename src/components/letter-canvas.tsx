@@ -61,7 +61,6 @@ export const LetterCanvas: React.FC<LetterCanvasProps> = ({
           onDelete={() => deleteItem(item.id)}
           handleDragStart={handleDragStart}
           isDragging={isDragging && currentItem?.id === item.id}
-          updateItemContent={updateItemContent}
           moveForward={() => moveItemForward(item.id)}
           moveBackward={() => moveItemBackward(item.id)}
           isPubliclyEditable={isPubliclyEditable}

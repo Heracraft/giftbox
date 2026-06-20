@@ -1,6 +1,4 @@
 import React from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "postcss";
 
 interface PhotoItemProps {
 	url: string;
@@ -10,6 +8,7 @@ interface PhotoItemProps {
 }
 
 export const PhotoItem: React.FC<PhotoItemProps> = ({ url, caption, onCaptionChange, readOnly = false }) => {
+  console.log({readOnly })
 	return (
 		<div className="bg-white p-4 shadow-md rounded-lg w-60 border border-stone-300 relative z-10 transition-all duration-300 ease-in-out hover:shadow-2xl">
 			<img src={url} alt="User uploaded image" className="w-full h-auto pointer-events-none border border-stone-200 rounded-sm shadow-inner" draggable="false" />
@@ -21,6 +20,9 @@ export const PhotoItem: React.FC<PhotoItemProps> = ({ url, caption, onCaptionCha
 					placeholder={readOnly ? "" : "Add a caption..."}
 					className="w-full text-sm text-center text-ellipsis overflow-hidden outline-none"
 					onMouseDown={(e) => e.stopPropagation()}
+					onTouchStart={(e) => e.stopPropagation()}
+					onPointerDown={(e) => e.stopPropagation()}
+					onKeyDown={(e) => e.stopPropagation()}
 					readOnly={readOnly}
 					title={caption}
 				/>

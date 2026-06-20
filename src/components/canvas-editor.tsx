@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Toolbar } from '@/components/toolbar'
@@ -10,6 +10,8 @@ import { VoiceRecorder } from '@/components/voice-recorder'
 import { DoodleDrawer } from '@/components/doodle-drawer'
 import { DottedBackground } from '@/components/dotted-background'
 import { pb } from '@/lib/pocketbase'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
+import { ViewportGuides, ViewportBoundingBox, ViewportDevice } from '@/components/viewport-guides'
 
 export interface LetterItem {
   id: string
@@ -41,9 +43,40 @@ export default function CanvasEditor({
   const [isDragging, setIsDragging] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [currentItem, setCurrentItem] = useState<LetterItem | null>(null)
+  const [activeViewport, setActiveViewport] = useState<ViewportDevice>('none')
   const canvasRef = useRef<HTMLDivElement>(null)
 
+  const contentBounds = useMemo(() => {
+    if (items.length === 0) return null;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    items.forEach(item => {
+      minX = Math.min(minX, item.position.x);
+      minY = Math.min(minY, item.position.y);
+      // Rough estimates of item sizes
+      const w = 300;
+      const h = 300;
+      maxX = Math.max(maxX, item.position.x + w);
+      maxY = Math.max(maxY, item.position.y + h);
+    });
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    };
+  }, [items]);
+
   const getRandomPosition = () => {
+    // If a viewport is active, try to center items loosely around the middle
+    if (activeViewport !== 'none' && typeof window !== 'undefined') {
+       return {
+         x: window.innerWidth / 2 + Math.floor((Math.random() - 0.5) * 200),
+         y: window.innerHeight / 2 + Math.floor((Math.random() - 0.5) * 200)
+       }
+    }
     return { 
       x: Math.floor(Math.random() * 200), 
       y: Math.floor(Math.random() * 200) 
@@ -238,11 +271,11 @@ export default function CanvasEditor({
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         
-        if (typeof item.content === 'string' && item.content.startsWith('data:image/')) {
-          // Both photo and doodle base64
+        if (typeof item.content === 'string' && (item.content.startsWith('data:image/') || item.content.startsWith('blob:'))) {
+          // Both photo and doodle base64/blob
           const res = await fetch(item.content);
           const blob = await res.blob();
-          const ext = item.type === 'doodle' ? 'png' : 'jpg';
+          const ext = item.type === 'doodle' ? 'svg' : 'jpg';
           const filename = `${item.type}_${item.id}.${ext}`;
           
           const file = new File([blob], filename, { type: blob.type });
@@ -299,7 +332,7 @@ export default function CanvasEditor({
       <div className="h-screen overflow-hidden bg-stone-200 flex flex-col relative">
         <DottedBackground />
         <main 
-          className="flex-1 relative overflow-hidden z-20"
+          className="flex-1 relative overflow-hidden z-20 canvas-background"
           ref={canvasRef}
           onMouseMove={handleDragMove}
           onTouchMove={handleDragMove}
@@ -307,18 +340,63 @@ export default function CanvasEditor({
           onTouchEnd={handleDragEnd}
           onMouseLeave={handleDragEnd}
         >
-          <LetterCanvas 
-            items={items} 
-            updateItemPosition={updateItemPosition}
-            updateItemContent={updateItemContent}
-            deleteItem={deleteItem}
-            handleDragStart={handleDragStart}
-            isDragging={isDragging}
-            currentItem={currentItem}
-            moveItemForward={moveItemForward}
-            moveItemBackward={moveItemBackward}
-            isPubliclyEditable={isPubliclyEditable}
-          />
+          <TransformWrapper
+            minScale={0.1}
+            maxScale={4}
+            initialScale={1}
+            centerOnInit={false}
+            limitToBounds={false}
+            onInit={(ref) => {
+               if (!isPubliclyEditable && items.length > 0) {
+                 setTimeout(() => {
+                   ref.zoomToElement('canvas-content-bounds', 1, 300, 'easeOut');
+                 }, 50);
+               }
+            }}
+            panning={{
+              excluded: ['touch-none', 'lucide'] // exclude draggable items and icons from triggering pan
+            }}
+            wheel={{ step: 0.1 }}
+            doubleClick={{ disabled: true }}
+          >
+            <>
+              {isPubliclyEditable && (
+                <div className="absolute top-4 right-4 z-50">
+                  <ViewportGuides activeViewport={activeViewport} onChange={setActiveViewport} />
+                </div>
+              )}
+              <TransformComponent 
+                wrapperStyle={{ width: '100vw', height: '100vh', position: 'absolute', inset: 0 }}
+                contentStyle={{ width: '100vw', height: '100vh' }}
+              >
+                {contentBounds && (
+                  <div 
+                    id="canvas-content-bounds" 
+                    className="absolute pointer-events-none opacity-0"
+                    style={{ 
+                      left: contentBounds.x - (contentBounds.width * 0.1) - 50, 
+                      top: contentBounds.y - (contentBounds.height * 0.1) - 50, 
+                      width: contentBounds.width * 1.2 + 100, 
+                      height: contentBounds.height * 1.2 + 100 
+                    }}
+                  />
+                )}
+                <ViewportBoundingBox activeViewport={activeViewport} />
+                <LetterCanvas 
+                  items={items} 
+                  updateItemPosition={updateItemPosition}
+                  updateItemContent={updateItemContent}
+                  deleteItem={deleteItem}
+                  handleDragStart={handleDragStart}
+                  isDragging={isDragging}
+                  currentItem={currentItem}
+                  moveItemForward={moveItemForward}
+                  moveItemBackward={moveItemBackward}
+                  isPubliclyEditable={isPubliclyEditable}
+                />
+              </TransformComponent>
+            </>
+          </TransformWrapper>
         </main>
         {isPubliclyEditable && (
           <div className="absolute bottom-0 left-0 right-0 z-30">

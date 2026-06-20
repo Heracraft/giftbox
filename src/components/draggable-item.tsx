@@ -1,18 +1,13 @@
 import React, { useState } from 'react'
 import { LetterItem } from '@/components/canvas-editor'
-import { PhotoItem } from '@/components/photo-item'
-import { LetterNote } from '@/components/letter-note'
-import { VoiceNote } from '@/components/voice-note'
 import { Button } from "@/components/ui/button"
 import { X, ArrowUp, ArrowDown } from 'lucide-react'
-import { SpotifyPlayer } from '@/components/spotify-player';
 
 interface DraggableItemProps {
   item: LetterItem
   onDelete: () => void
   handleDragStart: (e: React.MouseEvent | React.TouchEvent, item: LetterItem) => void
   isDragging: boolean
-  updateItemContent: (id: string, content: string, field?: string) => void
   moveForward: () => void
   moveBackward: () => void
   isPubliclyEditable?: boolean
@@ -24,7 +19,6 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
   onDelete, 
   handleDragStart, 
   isDragging,
-  updateItemContent,
   moveForward,
   moveBackward,
   isPubliclyEditable = true,
