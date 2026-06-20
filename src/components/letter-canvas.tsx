@@ -10,6 +10,7 @@ interface LetterCanvasProps {
   items: LetterItem[]
   updateItemPosition: (id: string, position: { x: number; y: number }) => void
   updateItemContent: (id: string, content: string, field?: string) => void
+  updateItemRotation: (id: string, rotation: number) => void
   deleteItem: (id: string) => void
   handleDragStart: (e: React.MouseEvent | React.TouchEvent, item: LetterItem) => void
   isDragging: boolean
@@ -22,6 +23,7 @@ interface LetterCanvasProps {
 export const LetterCanvas: React.FC<LetterCanvasProps> = ({ 
   items, 
   updateItemContent,
+  updateItemRotation,
   deleteItem, 
   handleDragStart,
   isDragging,
@@ -63,6 +65,7 @@ export const LetterCanvas: React.FC<LetterCanvasProps> = ({
           isDragging={isDragging && currentItem?.id === item.id}
           moveForward={() => moveItemForward(item.id)}
           moveBackward={() => moveItemBackward(item.id)}
+          resetRotation={() => updateItemRotation(item.id, 0)}
           isPubliclyEditable={isPubliclyEditable}
         >
           {renderItem(item)}

@@ -45,6 +45,7 @@ export default function CanvasEditor({
   const [currentItem, setCurrentItem] = useState<LetterItem | null>(null)
   const [activeViewport, setActiveViewport] = useState<ViewportDevice>('none')
   const canvasRef = useRef<HTMLDivElement>(null)
+  const dragStartRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null)
 
   const contentBounds = useMemo(() => {
     if (items.length === 0) return null;
@@ -180,6 +181,14 @@ export default function CanvasEditor({
     )
   }
 
+  const updateItemRotation = (id: string, rotation: number) => {
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id ? { ...item, rotation } : item
+      )
+    )
+  }
+
   const updateItemContent = (id: string, content: string, field: string = 'content') => {
     setItems((prevItems) =>
       prevItems.map((item) =>
@@ -194,29 +203,37 @@ export default function CanvasEditor({
 
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent, item: LetterItem) => {
     const position = 'touches' in e ? e.touches[0] : e
-    const rect = (e.target as HTMLElement).getBoundingClientRect()
-    const offsetX = position.clientX - rect.left
-    const offsetY = position.clientY - rect.top
     
     setIsDragging(true)
-    setCurrentItem({
-      ...item,
-      position: {
-        x: item.position.x,
-        y: item.position.y,
-      },
-      offsetX,
-      offsetY,
-    } as LetterItem & { offsetX: number; offsetY: number })
+    setCurrentItem(item)
+    dragStartRef.current = {
+      startX: position.clientX,
+      startY: position.clientY,
+      initialX: item.position.x,
+      initialY: item.position.y
+    }
   }
 
   const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging || !currentItem || !canvasRef.current) return
+    if (!isDragging || !currentItem || !dragStartRef.current) return
     
     const position = 'touches' in e ? e.touches[0] : e
-    const rect = canvasRef.current.getBoundingClientRect()
-    const x = position.clientX - rect.left - (currentItem?.offsetX ?? 0)
-    const y = position.clientY - rect.top - (currentItem?.offsetY ?? 0)
+    
+    let scale = 1
+    const transformElement = document.querySelector('.react-transform-component > div') as HTMLElement
+    if (transformElement) {
+      const transformStyle = transformElement.style.transform
+      const match = transformStyle.match(/scale\(([^)]+)\)/)
+      if (match) {
+        scale = parseFloat(match[1])
+      }
+    }
+
+    const dx = (position.clientX - dragStartRef.current.startX) / scale
+    const dy = (position.clientY - dragStartRef.current.startY) / scale
+
+    const x = dragStartRef.current.initialX + dx
+    const y = dragStartRef.current.initialY + dy
 
     updateItemPosition(currentItem.id, { x, y })
   }
@@ -224,6 +241,7 @@ export default function CanvasEditor({
   const handleDragEnd = () => {
     setIsDragging(false)
     setCurrentItem(null)
+    dragStartRef.current = null
   }
 
   const addNote = (color: string) => {
@@ -354,7 +372,8 @@ export default function CanvasEditor({
                }
             }}
             panning={{
-              excluded: ['touch-none', 'lucide'] // exclude draggable items and icons from triggering pan
+              disabled: isDragging,
+              excluded: ['exclude-pan', 'lucide'] // exclude specific UI elements and icons from triggering pan
             }}
             wheel={{ step: 0.1 }}
             doubleClick={{ disabled: true }}
@@ -386,6 +405,7 @@ export default function CanvasEditor({
                   items={items} 
                   updateItemPosition={updateItemPosition}
                   updateItemContent={updateItemContent}
+                  updateItemRotation={updateItemRotation}
                   deleteItem={deleteItem}
                   handleDragStart={handleDragStart}
                   isDragging={isDragging}
