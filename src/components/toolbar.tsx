@@ -27,16 +27,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   isSaving
 }) => {
   return (
-    <div className="pt-20 mb-4 mx-auto w-full max-w-4xl overflow-hidden relative">
-        <div className="bg-white rounded-2xl h-40 px-4 sm:px-12 relative flex justify-between items-end">
-          <Polaroid onClick={onAddPhoto} />
-          <NotePaper onAddNote={onAddNote} />
-          <Microphone onClick={onRecordVoice} />
-          <CD onAddSpotify={onAddSpotify} />
-          <Pencil onClick={onAddDoodle} />
+    <div className="pt-12 sm:pt-20 mb-2 sm:mb-4 mx-auto w-full max-w-4xl px-4 overflow-hidden relative">
+        <div className="bg-white rounded-2xl h-20 sm:h-40 px-2 sm:px-12 relative flex justify-between items-end pb-2 sm:pb-0 shadow-lg border border-stone-200/60">
+          <div className="w-12 sm:w-32 h-16 sm:h-40 flex items-end justify-center scale-[0.45] sm:scale-100 origin-bottom transition-all overflow-visible">
+            <Polaroid onClick={onAddPhoto} />
+          </div>
+          <div className="w-12 sm:w-32 h-16 sm:h-40 flex items-end justify-center scale-[0.45] sm:scale-100 origin-bottom transition-all overflow-visible">
+            <NotePaper onAddNote={onAddNote} />
+          </div>
+          <div className="w-12 sm:w-32 h-16 sm:h-40 flex items-end justify-center scale-[0.45] sm:scale-100 origin-bottom transition-all overflow-visible">
+            <Microphone onClick={onRecordVoice} />
+          </div>
+          <div className="w-12 sm:w-32 h-16 sm:h-40 flex items-end justify-center scale-[0.45] sm:scale-100 origin-bottom transition-all overflow-visible">
+            <CD onAddSpotify={onAddSpotify} />
+          </div>
+          <div className="w-12 sm:w-32 h-16 sm:h-40 flex items-end justify-center scale-[0.45] sm:scale-100 origin-bottom transition-all overflow-visible">
+            <Pencil onClick={onAddDoodle} />
+          </div>
         </div>
         {onShare && (
-          <div className="absolute right-4 top-4">
+          <div className="absolute right-6 top-2 sm:top-4">
             <Button 
               onClick={onShare} 
               disabled={isSaving}
@@ -45,7 +55,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               className="rounded-full shadow-lg"
             >
               <Share className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Share Canvas'}
+              {isSaving ? 'Saving...' : (
+                <>
+                  <span className="hidden sm:inline">Share Canvas</span>
+                  <span className="inline sm:hidden">Share</span>
+                </>
+              )}
             </Button>
           </div>
         )}

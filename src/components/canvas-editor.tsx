@@ -380,7 +380,7 @@ export default function CanvasEditor({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="h-screen overflow-hidden bg-stone-200 flex flex-col relative">
+      <div className="h-[100dvh] overflow-hidden bg-stone-200 flex flex-col relative">
         <DottedBackground />
         <main 
           className="flex-1 relative overflow-hidden z-20 canvas-background"
@@ -418,8 +418,8 @@ export default function CanvasEditor({
                 </div>
               )}
               <TransformComponent 
-                wrapperStyle={{ width: '100vw', height: '100vh', position: 'absolute', inset: 0 }}
-                contentStyle={{ width: '100vw', height: '100vh' }}
+                wrapperStyle={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+                contentStyle={{ width: '100%', height: '100%' }}
               >
                 {contentBounds && (
                   <div 

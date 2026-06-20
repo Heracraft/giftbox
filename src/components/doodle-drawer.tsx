@@ -30,7 +30,7 @@ export const DoodleDrawer: React.FC<DoodleDrawerProps> = ({ onClose, onDoodleAdd
   const [currentPath, setCurrentPath] = useState<string>('')
   const pointsRef = useRef<{ x: number; y: number }[]>([])
 
-  const getCoordinates = (e: React.MouseEvent<SVGSVGElement>) => {
+  const getCoordinates = (e: React.PointerEvent<SVGSVGElement>) => {
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
 
@@ -45,14 +45,14 @@ export const DoodleDrawer: React.FC<DoodleDrawerProps> = ({ onClose, onDoodleAdd
     }
   }
 
-  const startDrawing = (e: React.MouseEvent<SVGSVGElement>) => {
+  const startDrawing = (e: React.PointerEvent<SVGSVGElement>) => {
     const point = getCoordinates(e)
     pointsRef.current = [point]
     setCurrentPath(`M ${point.x} ${point.y}`)
     setIsDrawing(true)
   }
 
-  const draw = (e: React.MouseEvent<SVGSVGElement>) => {
+  const draw = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!isDrawing) return
 
     const point = getCoordinates(e)
@@ -119,13 +119,14 @@ export const DoodleDrawer: React.FC<DoodleDrawerProps> = ({ onClose, onDoodleAdd
           <div className="w-full aspect-[4/3] bg-white rounded-xl border-2 border-stone-200">
             <svg
               ref={svgRef}
-              className="w-full h-full cursor-crosshair"
+              className="w-full h-full cursor-crosshair touch-none"
               viewBox="0 0 400 300"
               preserveAspectRatio="xMidYMid meet"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
+              onPointerDown={startDrawing}
+              onPointerMove={draw}
+              onPointerUp={stopDrawing}
+              onPointerLeave={stopDrawing}
+              onPointerCancel={stopDrawing}
             >
               {paths.map((path, i) => (
                 <path
