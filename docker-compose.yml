@@ -1,0 +1,28 @@
+services:
+  pocketbase:
+    image: 'ghcr.io/coollabsio/pocketbase:latest'
+    environment:
+      - SERVICE_URL_POCKETBASE_8080
+    volumes:
+      - 'pocketbase-data:/app/pb_data'
+      - 'pocketbase-hooks:/app/pb_hooks'
+      - './pb_migrations:/app/pb_migrations'
+    ports:
+      - '8080:8080'
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${NEXT_PUBLIC_POCKETBASE_INSTANCE_URL}
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${NEXT_PUBLIC_POCKETBASE_INSTANCE_URL}
+    depends_on:
+      - pocketbase
+
+volumes:
+  pocketbase-data:
+  pocketbase-hooks:
