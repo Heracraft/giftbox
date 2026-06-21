@@ -20,9 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${SERVICE_URL_POCKETBASE}
-    environment:
-      - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL=${SERVICE_URL_POCKETBASE}
+        - NEXT_PUBLIC_POCKETBASE_INSTANCE_URL
     depends_on:
       - pocketbase
     restart: unless-stopped
