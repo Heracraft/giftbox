@@ -37,6 +37,7 @@ export default function CanvasEditor({
   isPubliclyEditable?: boolean
 }) {
   const [items, setItems] = useState<LetterItem[]>(initialItems)
+  const [isLoaded, setIsLoaded] = useState(false)
   const [isPhotoUploaderOpen, setIsPhotoUploaderOpen] = useState(false)
   const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false)
   const [isDoodleDrawerOpen, setIsDoodleDrawerOpen] = useState(false)
@@ -46,6 +47,33 @@ export default function CanvasEditor({
   const [activeViewport, setActiveViewport] = useState<ViewportDevice>('none')
   const canvasRef = useRef<HTMLDivElement>(null)
   const dragStartRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null)
+
+  useEffect(() => {
+    const key = `box_draft_${recordId || 'new'}`
+    const saved = localStorage.getItem(key)
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to parse saved canvas items', e)
+      }
+    }
+    setIsLoaded(true)
+  }, [recordId])
+
+  useEffect(() => {
+    if (!isLoaded) return
+    const key = `box_draft_${recordId || 'new'}`
+    localStorage.setItem(key, JSON.stringify(items))
+  }, [items, isLoaded, recordId])
+
+  const handleClear = () => {
+    if (confirm("Are you sure you want to clear your current progress? This will reset the canvas.")) {
+      const key = `box_draft_${recordId || 'new'}`
+      localStorage.removeItem(key)
+      setItems(initialItems)
+    }
+  }
 
   const contentBounds = useMemo(() => {
     if (items.length === 0) return null;
@@ -163,18 +191,6 @@ export default function CanvasEditor({
     const canvasElement = canvasRef.current;
     if (!canvasElement) return;
 
-    const preventOneFingerPan = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        e.touches.length === 1 && 
-        target && 
-        !target.closest('.draggable-item') && 
-        !target.closest('.exclude-pan')
-      ) {
-        e.stopPropagation();
-      }
-    };
-
     const handleCanvasPointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
       if (target && !target.closest('.draggable-item') && !target.closest('.exclude-pan')) {
@@ -184,10 +200,8 @@ export default function CanvasEditor({
       }
     };
 
-    canvasElement.addEventListener('touchstart', preventOneFingerPan, { capture: true });
     canvasElement.addEventListener('pointerdown', handleCanvasPointerDown, { capture: true });
     return () => {
-      canvasElement.removeEventListener('touchstart', preventOneFingerPan, { capture: true });
       canvasElement.removeEventListener('pointerdown', handleCanvasPointerDown, { capture: true });
     };
   }, []);
@@ -336,9 +350,20 @@ export default function CanvasEditor({
             ...item,
             content: `pocketbase_file:${filename}`
           });
-        } else if (item.type === 'voice' && item.content instanceof Blob) {
+        } else if (item.type === 'voice') {
+          let blob: Blob;
+          if (item.content instanceof Blob) {
+            blob = item.content;
+          } else if (typeof item.content === 'string' && (item.content.startsWith('data:audio/') || item.content.startsWith('blob:'))) {
+            const res = await fetch(item.content);
+            blob = await res.blob();
+          } else {
+            // Already saved pocketbase file
+            itemsToSave.push(item);
+            continue;
+          }
           const filename = `voice_${item.id}.wav`;
-          const file = new File([item.content], filename, { type: 'audio/wav' });
+          const file = new File([blob], filename, { type: 'audio/wav' });
           formData.append('media', file);
           
           itemsToSave.push({
@@ -460,6 +485,7 @@ export default function CanvasEditor({
               onAddSpotify={addSpotifyPlayer}
               onAddDoodle={() => setIsDoodleDrawerOpen(true)}
               onShare={handleShare}
+              onClear={handleClear}
               isSaving={isSaving}
             />
           </div>
@@ -484,13 +510,18 @@ export default function CanvasEditor({
           <VoiceRecorder
             onClose={() => setIsVoiceRecorderOpen(false)}
             onVoiceAdd={(audioBlob) => {
-              addItem({
-                id: Date.now().toString(),
-                type: 'voice',
-                content: audioBlob,
-                position: getRandomPosition(),
-                rotation: getRandomRotation()
-              })
+              const reader = new FileReader()
+              reader.onloadend = () => {
+                const base64data = reader.result as string
+                addItem({
+                  id: Date.now().toString(),
+                  type: 'voice',
+                  content: base64data,
+                  position: getRandomPosition(),
+                  rotation: getRandomRotation()
+                })
+              }
+              reader.readAsDataURL(audioBlob)
               setIsVoiceRecorderOpen(false)
             }}
           />

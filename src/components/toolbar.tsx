@@ -4,7 +4,7 @@ import { NotePaper } from './note-paper'
 import { Microphone } from './microphone'
 import { CD } from './cd'
 import { Pencil } from './pencil'
-import { Share } from 'lucide-react'
+import { Share, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ToolbarProps {
@@ -14,6 +14,7 @@ interface ToolbarProps {
   onAddSpotify: (url: string) => void
   onAddDoodle: () => void
   onShare?: () => void
+  onClear?: () => void
   isSaving?: boolean
 }
 
@@ -24,6 +25,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onAddSpotify, 
   onAddDoodle,
   onShare,
+  onClear,
   isSaving
 }) => {
   return (
@@ -45,23 +47,37 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <Pencil onClick={onAddDoodle} />
           </div>
         </div>
-        {onShare && (
-          <div className="absolute right-6 top-2 sm:top-4">
-            <Button 
-              onClick={onShare} 
-              disabled={isSaving}
-              variant="default"
-              size="sm"
-              className="rounded-full shadow-lg"
-            >
-              <Share className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : (
-                <>
-                  <span className="hidden sm:inline">Share Canvas</span>
-                  <span className="inline sm:hidden">Share</span>
-                </>
-              )}
-            </Button>
+        {(onShare || onClear) && (
+          <div className="absolute right-6 top-2 sm:top-4 flex gap-2">
+            {onClear && (
+              <Button 
+                onClick={onClear}
+                variant="outline"
+                size="sm"
+                className="rounded-full shadow-lg border-stone-300 hover:bg-stone-100 text-stone-600 hover:text-stone-900 bg-white"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Clear Canvas</span>
+                <span className="inline sm:hidden">Clear</span>
+              </Button>
+            )}
+            {onShare && (
+              <Button 
+                onClick={onShare} 
+                disabled={isSaving}
+                variant="default"
+                size="sm"
+                className="rounded-full shadow-lg"
+              >
+                <Share className="w-4 h-4 mr-2" />
+                {isSaving ? 'Saving...' : (
+                  <>
+                    <span className="hidden sm:inline">Share Canvas</span>
+                    <span className="inline sm:hidden">Share</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
     </div>

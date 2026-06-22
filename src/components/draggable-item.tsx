@@ -27,6 +27,7 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
   children
 }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const pressTimer = React.useRef<NodeJS.Timeout | null>(null)
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -43,14 +44,30 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
     zIndex: item.zIndex || 1
   }
 
+  const cancelPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current)
+      pressTimer.current = null
+    }
+  }
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || 
       (e.target as HTMLElement).tagName === 'TEXTAREA' ||
       (e.target as HTMLElement).closest('button')) {
       return;
     }
-    e.preventDefault();
-    handleDragStart(e, item);
+
+    if ((e.target as HTMLElement).closest('.drag-handle')) {
+      e.preventDefault()
+      handleDragStart(e, item)
+      return
+    }
+
+    pressTimer.current = setTimeout(() => {
+      e.preventDefault();
+      handleDragStart(e, item);
+    }, 500)
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -59,21 +76,35 @@ export const DraggableItem: React.FC<DraggableItemProps> = ({
       (e.target as HTMLElement).closest('button')) {
       return;
     }
-    
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(50);
+
+    if ((e.target as HTMLElement).closest('.drag-handle')) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+      handleDragStart(e, item)
+      return
     }
-    handleDragStart(e, item);
+
+    pressTimer.current = setTimeout(() => {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      handleDragStart(e, item);
+    }, 500)
   };
 
   return (
     <div
       style={style}
       onMouseDown={handleMouseDown}
+      onMouseUp={cancelPress}
+      onMouseLeave={cancelPress}
       onTouchStart={handleTouchStart}
+      onTouchEnd={cancelPress}
+      onTouchCancel={cancelPress}
+      onTouchMove={cancelPress}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`relative group exclude-pan draggable-item ${isDragging ? "touch-none" : ""}`}
+      className={`relative group draggable-item ${isDragging ? "touch-none" : ""}`}
     >
       {children}
       {isHovered && isPubliclyEditable && (
